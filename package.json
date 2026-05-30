@@ -2,7 +2,7 @@
   "name": "payment-reliability-layer",
   "version": "1.0.0",
   "description": "Production-ready payment processing with idempotency, fault tolerance, and reconciliation",
-  "author": "",
+  "author": "Ime Samuel",
   "private": true,
   "license": "MIT",
   "scripts": {
