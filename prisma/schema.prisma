@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PENDING_PROVIDER_CONFIRMATION
+}
+
+enum PaymentEventType {
+  INITIATED
+  PROVIDER_CALLED
+  CONFIRMED
+  FAILED
+  TIMEOUT
+  NETWORK_ERROR
+  REFUNDED
+  RECONCILED
+  IDEMPOTENCY_CACHE_HIT
+}
+
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  reference         String    @unique
+  amount            Int
+  currency          String    @default("NGN")
+  status            PaymentStatus @default(PENDING)
+  idempotencyKey    String    @unique
+  providerRef       String?
+  providerResponse  Json?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  events            PaymentEvent[]
+  idempotencyRecord IdempotencyKey?
+}
+
+model PaymentEvent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  paymentId   String   @db.ObjectId
+  payment     Payment  @relation(fields: [paymentId], references: [id])
+  type        PaymentEventType
+  payload     Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+model IdempotencyKey {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique
+  status      IdempotencyStatus
+  paymentId   String?  @unique @db.ObjectId
+  payment     Payment? @relation(fields: [paymentId], references: [id])
+  response    Json?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+}
